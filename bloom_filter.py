@@ -1,14 +1,19 @@
 from bitarray import bitarray
 
 import mmh3
+import math
 
 class BloomFilter(set):
-	def __init__(self, size, hash_count):
+	def __init__(self, n = 10**6, p = 0.01):
 		# super(BloomFilter, self).__init__()
-		self.bit_array = bitarray(size)
+		# m = size of bit array
+		# n = expected number of items
+		# p = probability percentage represented as decimal
+		k, m = self.optimal_km(n, p)
+		self.size = m
+		self.bit_array = bitarray(m)
 		self.bit_array.setall(0)
-		self.size = size
-		self.hash_count = hash_count
+		self.hash_count = k
 	
 	def __len__(self):
 		return self.size
@@ -22,6 +27,20 @@ class BloomFilter(set):
 			self.bit_array[index] = 1
 		return self
 	
+	def optimal_km(self, n = 10**6, p = 0.01):
+		'''Returns the optimal values for:
+			k = number of hashes
+			m = size of bit array
+		given 
+			n = size of the items 
+			p = probability percentage represented as decimal
+		'''
+		ln2 = math.log(2)
+		lnp = math.log(p)
+		k = -lnp/ln2
+		m = -n*lnp/((ln2)**2)
+		return int(math.ceil(k)), int(math.ceil(m))
+	
 	def __contains__(self, item):
 		out = True
 		for i in range(self.hash_count):
@@ -32,7 +51,7 @@ class BloomFilter(set):
 		return out
 	
 def main():
-	bloom = BloomFilter(100, 10)
+	bloom = BloomFilter()
 	animals = ['dog', 'cat', 'giraffe']
 	for animal in animals:
 		bloom.add(animal)
